@@ -1,19 +1,11 @@
-import numpy as np
-import pytesseract
 import cv2
-from mtcnn import MTCNN
-import os
-from datetime import datetime
 import spacy
 import json
+import sys
 
 class PassportDataExtractor:
-    def __init__(self, image) -> None:
-        self.image = image
-        self.detector = MTCNN()
+    def __init__(self) -> None:
         self.nlp = spacy.load('en_core_web_sm')
-        self.face = None
-        self.details = None
 
     def preprocess_image(self, image):
         # Check if the image is grayscale
@@ -39,7 +31,11 @@ class PassportDataExtractor:
         return brightened_image
     
     def detect_face(self, image):
-        faces = self.detector.detect_faces(image)
+        from mtcnn import MTCNN
+        detector = MTCNN()
+        faces = detector.detect_faces(image)
+        del(detector)
+        del sys.modules['mtcnn']
         return faces
     
     def extract_face(self, image, im2):
@@ -68,17 +64,18 @@ class PassportDataExtractor:
         return info
     
     def text_extraction(self, image):
+        import pytesseract
         text = pytesseract.image_to_string(image)
+        del sys.modules['pytesseract']
         extracted_text = self.extract_info_ner(text)
         return extracted_text
         
-    def process_image(self):
-        image_copy = self.image.copy()
-        preprocessed_image = self.preprocess_image(self.image)
+    def process_image(self, image):
+        image_copy = image.copy()
+        preprocessed_image = self.preprocess_image(image)
         face = self.extract_face(preprocessed_image, image_copy)
         text = self.text_extraction(image_copy)
-        text['face'] = face
         
         json_string = json.dumps(text)
         #print(json_string)
-        return json_string
+        return face, json_string
