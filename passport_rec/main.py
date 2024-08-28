@@ -2,17 +2,28 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from passport_data_extracter import PassportDataExtractor  # Adjust the import path based on your file structure
 import cv2
 import uvicorn
-import os
+import numpy as np
 import base64
+
+
 app = FastAPI()
 
 @app.post("/extract_passport_data/")
-async def extract_passport_data(file_path: str = Form(...)):
+async def extract_passport_data(file: UploadFile = File(...)):
     try:
-        if not os.path.isfile(file_path):
-            raise HTTPException(status_code=400, detail="File does not exist")
+        ### This part is for when the an image link is send only
+        # if not os.path.isfile(file_path):
+        #     raise HTTPException(status_code=400, detail="File does not exist")
 
-        image = cv2.imread(file_path)
+        # image = cv2.imread(file_path)
+        
+        file_bytes = await file.read()
+        
+        # Convert the byte data to a NumPy array
+        np_array = np.frombuffer(file_bytes, np.uint8)
+        
+        # Decode the image using OpenCV
+        image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
         
         if image is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
