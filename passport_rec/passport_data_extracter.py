@@ -2,10 +2,15 @@ import cv2
 import spacy
 import json
 import sys
+import re
 
 class PassportDataExtractor:
     def __init__(self) -> None:
-        self.nlp = spacy.load('en_core_web_sm')
+        try:
+            self.nlp = spacy.load('en_core_web_sm')
+        except OSError:
+            spacy.cli.download("en_core_web_sm")
+            self.nlp = spacy.load('en_core_web_sm')
 
     def preprocess_image(self, image):
         # Check if the image is grayscale
@@ -30,6 +35,10 @@ class PassportDataExtractor:
 
         return brightened_image
     
+    def clean_text(text):
+        cleaned_text = re.sub(r'\s+', ' ', text).strip()
+        return cleaned_text
+    
     def detect_face(self, image):
         from mtcnn import MTCNN
         detector = MTCNN()
@@ -50,6 +59,7 @@ class PassportDataExtractor:
             return None  
     
     def extract_info_ner(self, text):
+        text = self.clean_text(text)
         doc = self.nlp(text)
         info = {}
 

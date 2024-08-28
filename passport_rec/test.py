@@ -4,7 +4,7 @@ from passport_data_extracter import PassportDataExtractor
 
 
 # Load the image
-filepath = '/Users/chirasthit/Developer/Data Science/Rootcode TT/passport_rec/test_images/p30.jpeg'
+filepath = 'Set a filepath'
 image = cv2.imread(filepath)
 
 if image is not None:
