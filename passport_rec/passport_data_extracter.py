@@ -3,11 +3,13 @@ import spacy
 import json
 import sys
 import re
+from deepface import DeepFace
 
 class PassportDataExtractor:
     def __init__(self) -> None:
         try:
             self.nlp = spacy.load('en_core_web_sm')
+            self.df_model = DeepFace.build_model('Facenet')
         except OSError:
             spacy.cli.download("en_core_web_sm")
             self.nlp = spacy.load('en_core_web_sm')
@@ -80,12 +82,16 @@ class PassportDataExtractor:
         extracted_text = self.extract_info_ner(text)
         return extracted_text
         
-    def process_image(self, image):
+    def facial_comparison(self, p_image, l_image):
+        result = DeepFace.verify(p_image, l_image, model_name="Facenet", model=self.df_model)
+        return result['verified']
+        
+    def process_image(self, image, user_image):
         image_copy = image.copy()
         preprocessed_image = self.preprocess_image(image)
         face = self.extract_face(preprocessed_image, image_copy)
         text = self.text_extraction(image_copy)
-        
+        fc_bool_result = self.facial_comparison(face, user_image)
         json_string = json.dumps(text)
         #print(json_string)
-        return face, json_string
+        return face, json_string, fc_bool_result
