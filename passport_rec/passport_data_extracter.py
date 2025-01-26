@@ -3,11 +3,13 @@ import spacy
 import json
 import sys
 import re
+from deepface import DeepFace
 
 class PassportDataExtractor:
     def __init__(self) -> None:
         try:
             self.nlp = spacy.load('en_core_web_sm')
+            self.df_model = DeepFace.build_model('Facenet')
         except OSError:
             spacy.cli.download("en_core_web_sm")
             self.nlp = spacy.load('en_core_web_sm')
@@ -29,8 +31,7 @@ class PassportDataExtractor:
         enhanced_image = cv2.merge((cl, a, b))
         enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_LAB2BGR)
 
-        # Optionally, increase the brightness
-        beta = 30  # Brightness control (0-100)
+        beta = 30
         brightened_image = cv2.convertScaleAbs(enhanced_image, alpha=1, beta=beta)
 
         return brightened_image
@@ -50,7 +51,6 @@ class PassportDataExtractor:
     def extract_face(self, image, im2):
         faces = self.detect_face(image)
         if len(faces) > 0:
-            # Use the first detected face
             face = faces[0]
             x, y, width, height = face['box']
             cropped_face = im2[y:y+height, x:x+width]
@@ -68,7 +68,7 @@ class PassportDataExtractor:
                 info['name'] = ent.text
             elif ent.label_ == 'DATE':
                 info['dob'] = ent.text
-            elif ent.label_ == 'CARDINAL':  # For things like passport numbers
+            elif ent.label_ == 'CARDINAL':  
                 info['passport_number'] = ent.text
         
         return info
@@ -80,12 +80,16 @@ class PassportDataExtractor:
         extracted_text = self.extract_info_ner(text)
         return extracted_text
         
-    def process_image(self, image):
+    def facial_comparison(self, p_image, l_image):
+        result = DeepFace.verify(p_image, l_image, model_name="Facenet", model=self.df_model)
+        return result['verified']
+        
+    def process_image(self, image, user_image):
         image_copy = image.copy()
         preprocessed_image = self.preprocess_image(image)
         face = self.extract_face(preprocessed_image, image_copy)
         text = self.text_extraction(image_copy)
-        
+        fc_bool_result = self.facial_comparison(face, user_image)
         json_string = json.dumps(text)
         #print(json_string)
-        return face, json_string
+        return face, json_string, fc_bool_result
