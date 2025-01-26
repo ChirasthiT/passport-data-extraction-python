@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
-from passport_data_extracter import PassportDataExtractor  # Adjust the import path based on your file structure
+from passport_data_extracter import PassportDataExtractor 
 import cv2
 import uvicorn
 import numpy as np

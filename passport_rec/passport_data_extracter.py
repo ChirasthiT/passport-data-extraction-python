@@ -31,8 +31,7 @@ class PassportDataExtractor:
         enhanced_image = cv2.merge((cl, a, b))
         enhanced_image = cv2.cvtColor(enhanced_image, cv2.COLOR_LAB2BGR)
 
-        # Optionally, increase the brightness
-        beta = 30  # Brightness control (0-100)
+        beta = 30
         brightened_image = cv2.convertScaleAbs(enhanced_image, alpha=1, beta=beta)
 
         return brightened_image
@@ -52,7 +51,6 @@ class PassportDataExtractor:
     def extract_face(self, image, im2):
         faces = self.detect_face(image)
         if len(faces) > 0:
-            # Use the first detected face
             face = faces[0]
             x, y, width, height = face['box']
             cropped_face = im2[y:y+height, x:x+width]
@@ -70,7 +68,7 @@ class PassportDataExtractor:
                 info['name'] = ent.text
             elif ent.label_ == 'DATE':
                 info['dob'] = ent.text
-            elif ent.label_ == 'CARDINAL':  # For things like passport numbers
+            elif ent.label_ == 'CARDINAL':  
                 info['passport_number'] = ent.text
         
         return info
